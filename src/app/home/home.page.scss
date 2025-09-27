@@ -1,0 +1,153 @@
+// Barra azul superior
+.blue-toolbar {
+  --background: #0071ce;
+  --min-height: 70px;
+  --border-width: 0;
+  
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    
+    .logo-section .logo {
+      height: 40px;
+      width: auto;
+      max-width: 150px;
+      cursor: pointer;
+    }
+    
+    .title-section .page-title {
+      color: rgb(255, 255, 255);
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .empty-space {
+      width: 150px;
+    }
+  }
+}
+
+//
+
+ion-content {
+  --background: #f5f5f5;
+}
+
+.container {
+  padding: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.options-list {
+  background: transparent;
+}
+
+.main-option {
+  --background: #3880ff;
+  --color: white;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 60px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  ion-icon {
+    font-size: 24px;
+  }
+}
+
+.secondary-option {
+  --background: white;
+  --color: #333;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 50px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  
+  ion-icon {
+    color: #3880ff;
+    font-size: 20px;
+  }
+}
+
+// Estilos responsivos
+@media (min-width: 768px) {
+  .container {
+    padding: 32px;
+  }
+  
+  h2 {
+    font-size: 24px;
+  }
+  
+  .main-option {
+    --min-height: 70px;
+    
+    ion-icon {
+      font-size: 28px;
+    }
+  }
+  
+  .secondary-option {
+    --min-height: 60px;
+    
+    ion-icon {
+      font-size: 24px;
+    }
+  }
+}
+
+// Ajustes para tablets
+@media (min-width: 576px) and (max-width: 767px) {
+  .container {
+    padding: 24px;
+  }
+}
+
+// Ajustes para móviles pequeños
+@media (max-width: 575px) {
+  h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+  
+  .main-option, .secondary-option {
+    --padding-start: 12px;
+    --padding-end: 12px;
+  }
+  
+  .main-option {
+    --min-height: 54px;
+    margin-bottom: 16px;
+    
+    ion-icon {
+      font-size: 20px;
+    }
+  }
+  
+  .secondary-option {
+    --min-height: 46px;
+    margin-bottom: 10px;
+    
+    ion-icon {
+      font-size: 18px;
+    }
+  }
+}

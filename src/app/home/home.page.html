@@ -1,0 +1,61 @@
+<ion-header [translucent]="true">
+  <!-- Barra azul superior con logo -->
+  <ion-toolbar class="blue-toolbar">
+    <div class="header-content">
+      <!-- Logo Líder a la izquierda -->
+      <div class="logo-section">
+        <img src="https://i5.walmartimages.com/dfw/63fd9f59-4a2e/587a39f4-fa04-49c6-b70f-ed494f49ff69/v1/chile-walmart-od-logo.svg" 
+             alt="Líder" 
+             class="logo" 
+             routerLink="/home"
+             style="cursor: pointer;">
+      </div>
+      <!-- Espacio vacío para balancear -->
+      <div class="empty-space"></div>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+
+<ion-content [fullscreen]="true">
+  <div class="container">
+    <h2>Conversa conmigo para poder ayudarte</h2>
+    
+    <ion-list class="options-list">
+      <!-- Opción principal -->
+      <ion-item button class="main-option" lines="none">
+        <ion-icon slot="start" name="chatbubbles"></ion-icon>
+        <ion-label>Comenzar a conversar</ion-label>
+      </ion-item>
+
+      <!-- Opciones secundarias -->
+      <!-- Por esta versión con click -->
+      <!-- primera modificación, agregando pagina de price_check -->
+<ion-item button class="secondary-option" lines="none" (click)="navigateToPriceCheck()">
+  <ion-icon slot="start" name="pricetag"></ion-icon>
+  <ion-label>Pregúntame por el precio de un producto</ion-label>
+</ion-item>
+
+      <!-- ✅ ACTUALIZADO: Ahora navega a Store Locator -->
+      <ion-item button class="secondary-option" lines="none" (click)="navigateToStoreLocator()">
+        <ion-icon slot="start" name="location"></ion-icon>
+        <ion-label>Pregúntame dónde comprar un producto</ion-label>
+      </ion-item>
+
+      <ion-item button class="secondary-option" lines="none" (click)="navigateToOffers()">
+        <ion-icon slot="start" name="megaphone"></ion-icon>
+        <ion-label>Pregúntame por ofertas</ion-label>
+      </ion-item>
+
+      <ion-item button class="secondary-option" lines="none" (click)="navigateToRecipes()">
+        <ion-icon slot="start" name="restaurant"></ion-icon>
+        <ion-label>Pregúntame como hacer una receta de cocina</ion-label>
+      </ion-item>
+
+      <ion-item button class="secondary-option" lines="none">
+        <ion-icon slot="start" name="phone-portrait"></ion-icon>
+        <ion-label>Utiliza tu aplicación móvil para registrar tus compras</ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+</ion-content>

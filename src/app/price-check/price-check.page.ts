@@ -5,6 +5,7 @@ import {
   IonCardTitle, IonCardContent, IonIcon, 
   IonButtons, IonBackButton, IonSpinner, IonCardSubtitle
 } from '@ionic/angular/standalone';
+import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { barcode, search, camera, close, scan, qrCode } from 'ionicons/icons';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +19,7 @@ import { ProductsService, Product } from '../services/products';
   styleUrls: ['./price-check.page.scss'],
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonContent,
+    RouterModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonButton, IonInput, IonItem, IonCard, 
     IonCardTitle, IonCardContent, IonIcon, 
     IonButtons, IonBackButton, IonSpinner, IonCardSubtitle, // ✅ Agregado IonCardSubtitle

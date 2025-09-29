@@ -172,19 +172,7 @@
                   <ion-icon name="apps"></ion-icon>
                   <span>{{ product.category }}</span>
                 </div>
-                
-                <div class="detail-item">
-                  <ion-icon name="barcode"></ion-icon>
-                  <span class="barcode">{{ product.barcode }}</span>
-                </div>
-                
-                <div class="detail-item" *ngIf="product.stores && product.stores.length > 0">
-                  <ion-icon name="storefront"></ion-icon>
-                  <div>
-                    <strong>Disponible en:</strong>
-                    <div class="stores-list">{{ product.stores.join(', ') }}</div>
-                  </div>
-                </div>
+
               </div>
             </ion-card-content>
           </ion-card>

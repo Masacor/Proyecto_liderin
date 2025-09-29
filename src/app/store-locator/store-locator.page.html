@@ -129,11 +129,8 @@
           </div>
 
           <div class="additional-info">
-            <ion-chip color="success" *ngIf="selectedProduct.stores && selectedProduct.stores.length > 0">
-              <ion-icon name="storefront"></ion-icon>
-              <ion-label>Disponible en {{ selectedProduct.stores.length }} tienda(s)</ion-label>
-            </ion-chip>
-
+            <!-- ❌ SECCIÓN ELIMINADA: Ya no muestra información de tiendas -->
+            
             <div class="price-info" *ngIf="selectedProduct.inOffer">
               <ion-text color="danger">
                 <strong>¡OFERTA! ${{ selectedProduct.offerPrice?.toLocaleString('es-CL') }}</strong>

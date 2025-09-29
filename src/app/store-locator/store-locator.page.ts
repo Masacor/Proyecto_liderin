@@ -6,6 +6,7 @@ import {
   IonButtons, IonBackButton, IonSpinner, IonLabel,
   IonList, IonChip, IonText, IonCardSubtitle // ✅ AÑADIDO
 } from '@ionic/angular/standalone';
+import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { search, location, navigate, storefront, arrowBack } from 'ionicons/icons';
 import { FormsModule } from '@angular/forms';
@@ -19,7 +20,7 @@ import { ProductsService, Product } from '../services/products';
   styleUrls: ['./store-locator.page.scss'],
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonContent,
+    RouterModule, IonHeader, IonToolbar, IonTitle, IonContent,
     IonButton, IonInput, IonItem, IonCard, 
     IonCardHeader, IonCardTitle, IonCardContent, IonIcon, 
     IonButtons, IonBackButton, IonSpinner, IonLabel,
@@ -38,6 +39,7 @@ export class StoreLocatorPage {
   constructor(private productsService: ProductsService) {
     addIcons({ search, location, navigate, storefront, arrowBack });
   }
+
 
   // 🔍 BUSCAR PRODUCTO PARA SABER SU UBICACIÓN
   searchProductLocation() {

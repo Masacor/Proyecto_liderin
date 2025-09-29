@@ -10,7 +10,6 @@ export interface Product {
   category: string;
   inOffer?: boolean;
   offerPrice?: number;
-  stores?: string[];
   // NUEVA PROPIEDAD: ubicación en el supermercado
   supermarketLocation?: {
     aisle: string;     // Pasillo
@@ -34,7 +33,6 @@ export class ProductsService {
       category: 'Lácteos',
       inOffer: true,
       offerPrice: 999,
-      stores: ['Líder', 'Jumbo', 'Santa Isabel'],
       supermarketLocation: {
         aisle: 'Pasillo 1',
         section: 'Refrigerados',
@@ -50,7 +48,6 @@ export class ProductsService {
       barcode: '7801234567891',
       category: 'Lácteos',
       inOffer: false,
-      stores: ['Líder', 'Jumbo'],
       supermarketLocation: {
         aisle: 'Pasillo 1',
         section: 'Refrigerados',
@@ -67,7 +64,6 @@ export class ProductsService {
       category: 'Lácteos',
       inOffer: true,
       offerPrice: 899,
-      stores: ['Líder', 'Tottus'],
       supermarketLocation: {
         aisle: 'Pasillo 1',
         section: 'Refrigerados',
@@ -83,7 +79,6 @@ export class ProductsService {
       barcode: '7801234567893',
       category: 'Abarrotes',
       inOffer: false,
-      stores: ['Líder', 'Jumbo', 'Santa Isabel', 'Tottus'],
       supermarketLocation: {
         aisle: 'Pasillo 2',
         section: 'Granos y Cereales',
@@ -99,7 +94,6 @@ export class ProductsService {
       barcode: '7801875032010',
       category: 'Abarrotes',
       inOffer: false,
-      stores: ['Líder', 'Jumbo', 'Santa Isabel', 'Tottus'],
       supermarketLocation: {
         aisle: 'Pasillo 3',
         section: 'Bebidas Calientes',
@@ -116,7 +110,6 @@ export class ProductsService {
       category: 'Aceites',
       inOffer: true,
       offerPrice: 1990,
-      stores: ['Líder', 'Santa Isabel'],
       supermarketLocation: {
         aisle: 'Pasillo 4',
         section: 'Aceites y Vinagres',

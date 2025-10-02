@@ -68,4 +68,8 @@ export class HomePage {
     this.router.navigate(['/offers']);
   }
 
+  navigateToAppDownload() {
+    this.router.navigate(['/app-download']);
+  }
+
 }

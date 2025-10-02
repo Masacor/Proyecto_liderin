@@ -7,7 +7,7 @@ import { addIcons } from 'ionicons';
 import { 
   chatbubbles, pricetag, location, 
   megaphone, restaurant, phonePortrait,
-  personCircleOutline, sparkles, star // ← Nuevos iconos
+  personCircleOutline, sparkles, star
 } from 'ionicons/icons';
 import { Router } from '@angular/router';
 
@@ -56,5 +56,10 @@ export class HomePage {
 
   navigateToRecipes() {
     this.router.navigate(['/recipes']);
+  }
+
+  // ✅ CORREGIDO: Dentro de la clase
+  navigateToAppDownload() {
+    this.router.navigate(['/app-download']);
   }
 }

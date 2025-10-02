@@ -25,5 +25,9 @@ export const routes: Routes = [
   {
     path: 'store-locator',
     loadComponent: () => import('./store-locator/store-locator.page').then( m => m.StoreLocatorPage)
+  },  {
+    path: 'app-download',
+    loadComponent: () => import('./app-download/app-download.page').then( m => m.AppDownloadPage)
   },
+
 ];

@@ -54,6 +54,7 @@
       <div class="options-section">
         <h2>Conversa conmigo para poder ayudarte</h2>
         
+      
         <ion-list class="options-list">
           <!-- Opción principal -->
           <ion-item button class="main-option" lines="none">
@@ -82,9 +83,9 @@
             <ion-label>Pregúntame como hacer una receta de cocina</ion-label>
           </ion-item>
 
-          <ion-item button class="secondary-option" lines="none">
+          <ion-item button class="secondary-option" lines="none" (click)="navigateToAppDownload()">
             <ion-icon slot="start" name="phone-portrait"></ion-icon>
-            <ion-label>Utiliza tu aplicación móvil para registrar tus compras</ion-label>
+            <ion-label>Descarga nuestra App Móvil para registrar tus compras</ion-label>
           </ion-item>
         </ion-list>
       </div>

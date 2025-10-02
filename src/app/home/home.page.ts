@@ -1,24 +1,15 @@
 import { Component } from '@angular/core';
 import { 
-  IonHeader, 
-  IonToolbar, 
-  IonTitle, 
-  IonContent, 
-  IonList, 
-  IonItem, 
-  IonLabel, 
-  IonIcon 
+  IonHeader, IonToolbar, IonTitle, IonContent, 
+  IonList, IonItem, IonLabel, IonIcon 
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
-  chatbubbles, 
-  pricetag, 
-  location, 
-  megaphone, 
-  restaurant, 
-  phonePortrait 
+  chatbubbles, pricetag, location, 
+  megaphone, restaurant, phonePortrait,
+  personCircleOutline, sparkles, star // ← Nuevos iconos
 } from 'ionicons/icons';
-import { Router } from '@angular/router'; // ← Añade esta importación
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -26,46 +17,44 @@ import { Router } from '@angular/router'; // ← Añade esta importación
   styleUrls: ['home.page.scss'],
   standalone: true,
   imports: [
-    IonHeader, 
-    IonToolbar, 
-    IonTitle, 
-    IonContent, 
-    IonList, 
-    IonItem, 
-    IonLabel, 
-    IonIcon
+    IonHeader, IonToolbar, IonTitle, IonContent, 
+    IonList, IonItem, IonLabel, IonIcon
   ]
 })
 export class HomePage {
-  constructor(private router: Router) { // ← Inyecta Router
-    // Registrar los íconos que vamos a utilizar
+  currentAvatar = 'assets/images/liderin.png';
+
+  constructor(private router: Router) {
     addIcons({
       chatbubbles,
       pricetag,
       location,
       megaphone,
       restaurant,
-      'phone-portrait': phonePortrait
+      'phone-portrait': phonePortrait,
+      'person-circle-outline': personCircleOutline,
+      sparkles,
+      star
     });
   }
-  // ← Añade este método
+
+  changeAvatar(avatarPath: string) {
+    this.currentAvatar = avatarPath;
+  }
+
   navigateToPriceCheck() {
     this.router.navigate(['/price-check']);
   }
 
-  // 🔗 MÉTODO PARA IR A DÓNDE COMPRAR (STORE LOCATOR) - ESTE FALTA
   navigateToStoreLocator() {
     this.router.navigate(['/store-locator']);
+  }
+
+  navigateToOffers() {
+    this.router.navigate(['/offers']);
   }
 
   navigateToRecipes() {
     this.router.navigate(['/recipes']);
   }
-
-    // 🔗 MÉTODO PARA IR A OFERTAS (QUE FALTABA)
-  navigateToOffers() {
-    // Por ahora redirige a price-check, luego crearás la página de ofertas
-    this.router.navigate(['/offers']);
-  }
-
 }

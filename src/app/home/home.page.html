@@ -19,7 +19,32 @@
     <div class="chat-layout">
       <!-- Avatar Liderin -->
       <div class="avatar-section">
-        <img src="assets/images/liderin.png" alt="Liderin" class="avatar-img">
+        <!-- Selector de avatar - ARRIBA -->
+        <div class="avatar-selector-minimal">
+          <div class="selector-label">
+            <ion-icon name="person-circle-outline"></ion-icon>
+            <span>Elige tu avatar</span>
+          </div>
+          <div class="selector-buttons">
+            <button class="selector-btn" 
+                    [class.active]="currentAvatar === 'assets/images/liderin.png'"
+                    (click)="changeAvatar('assets/images/liderin.png')">
+              <ion-icon name="sparkles"></ion-icon>
+              <span>Avatar 1
+          
+              </span>
+            </button>
+            <button class="selector-btn" 
+                    [class.active]="currentAvatar === 'assets/images/liderin2.png'"
+                    (click)="changeAvatar('assets/images/liderin2.png')">
+              <ion-icon name="star"></ion-icon>
+              <span>Avatar 2</span>
+            </button>
+          </div>
+        </div>
+
+        <img [src]="currentAvatar" alt="Liderin" class="avatar-img">
+        
         <div class="avatar-bubble">
           <p>¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?</p>
         </div>
@@ -28,6 +53,7 @@
       <!-- Opciones de conversación -->
       <div class="options-section">
         <h2>Conversa conmigo para poder ayudarte</h2>
+        
       
         <ion-list class="options-list">
           <!-- Opción principal -->

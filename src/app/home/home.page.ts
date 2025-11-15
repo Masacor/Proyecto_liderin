@@ -1,15 +1,24 @@
 import { Component } from '@angular/core';
 import { 
   IonHeader, IonToolbar, IonTitle, IonContent, 
-  IonList, IonItem, IonLabel, IonIcon 
+  IonList, IonItem, IonLabel, IonIcon,
+  IonButton, IonTextarea, IonSpinner
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
   chatbubbles, pricetag, location, 
   megaphone, restaurant, phonePortrait,
-  personCircleOutline, sparkles, star
+  personCircleOutline, sparkles, star,
+  send, arrowBack
 } from 'ionicons/icons';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+import { ChatService, ApiResponse } from '../services/chat.service';
+import { ProductsService, Product } from '../services/products';
+import { RecipesService, Recipe } from '../services/recipes.service';
+import { OffersService, Offer } from '../services/offers.service';
 
 @Component({
   selector: 'app-home',
@@ -18,13 +27,30 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, 
-    IonList, IonItem, IonLabel, IonIcon
+    IonList, IonItem, IonLabel, IonIcon,
+    IonButton, IonTextarea, IonSpinner,
+    FormsModule,
+    CommonModule
   ]
 })
 export class HomePage {
   currentAvatar = 'assets/images/liderin.png';
+  chatMessage = "¡Hola! Soy Liderín, tu asistente virtual del Supermercado Líder. ¿En qué puedo ayudarte hoy?";
+  showChatInput = false;
 
-  constructor(private router: Router) {
+  // 🆕 NUEVAS PROPIEDADES PARA CONTROLAR CONVERSACIÓN
+  isInConversation = false;
+
+  userMessage: string = '';
+  isLoading: boolean = false;
+
+  constructor(
+    private router: Router,
+    private chatService: ChatService,
+    private productsService: ProductsService,
+    private recipesService: RecipesService,
+    private offersService: OffersService
+  ) {
     addIcons({
       chatbubbles,
       pricetag,
@@ -34,12 +60,35 @@ export class HomePage {
       'phone-portrait': phonePortrait,
       'person-circle-outline': personCircleOutline,
       sparkles,
-      star
+      star,
+      send,
+      'arrow-back': arrowBack
     });
   }
 
+  // 🆕 MÉTODOS PARA CONTROLAR CONVERSACIÓN
+  startConversation() {
+    this.isInConversation = true;
+    this.showChatInput = true;
+    this.userMessage = '';
+  }
+
+  endConversation() {
+    this.isInConversation = false;
+    this.showChatInput = false;
+    this.userMessage = '';
+    // Restaurar mensaje inicial
+    this.chatMessage = "¡Hola! Soy Liderín, tu asistente virtual del Supermercado Líder. ¿En qué puedo ayudarte hoy?";
+  }
+
+  // MÉTODOS DE NAVEGACIÓN Y UI
   changeAvatar(avatarPath: string) {
     this.currentAvatar = avatarPath;
+  }
+
+  toggleChatInput() {
+    this.showChatInput = !this.showChatInput;
+    this.userMessage = '';
   }
 
   navigateToPriceCheck() {
@@ -58,8 +107,469 @@ export class HomePage {
     this.router.navigate(['/recipes']);
   }
 
-  // ✅ CORREGIDO: Dentro de la clase
   navigateToAppDownload() {
     this.router.navigate(['/app-download']);
+  }
+
+  // MÉTODOS DE DETECCIÓN Y BÚSQUEDA (MANTENER IGUAL)
+  private findSpecificProduct(message: string, productCategory: string): string {
+    const productPatterns: { [key: string]: string[] } = {
+      'leche': ['soprole', 'colun', 'loncoleche'],
+      'arroz': ['tucapel', 'grado 1'],
+      'aceite': ['chef', 'maravilla'],
+      'té': ['supremo'],
+      'queso': ['mantecoso'],
+      'vino': ['carmenere', 'casa real'],
+      'mantequilla': ['con sal'],
+      'atún': ['lomitos', 'agua']
+    };
+    
+    const patterns = productPatterns[productCategory];
+    if (patterns) {
+      const found = patterns.find(pattern => message.includes(pattern));
+      if (found) {
+        return `${found} ${productCategory}`;
+      }
+    }
+    
+    return productCategory;
+  }
+
+  private findProductType(message: string, productCategory: string): string {
+    const typePatterns: { [key: string]: string[] } = {
+      'leche': ['entera', 'deslactosada', 'semidescremada', 'descremada'],
+      'arroz': ['grado 1', 'integral', 'largo', 'corto'],
+      'aceite': ['maravilla', 'girasol', 'oliva']
+    };
+    
+    const patterns = typePatterns[productCategory];
+    if (patterns) {
+      const found = patterns.find(pattern => message.includes(pattern));
+      if (found) {
+        return found;
+      }
+    }
+    
+    return '';
+  }
+
+  private findPreciseProducts(searchTerm: string, specificProduct?: string, productType?: string, intentType?: string): Product[] {
+    let products: Product[] = [];
+    
+    if (specificProduct) {
+      products = this.productsService.searchProducts(specificProduct);
+    } else {
+      products = this.productsService.searchProducts(searchTerm);
+    }
+    
+    if (productType) {
+      products = products.filter(product => 
+        product.name.toLowerCase().includes(productType) ||
+        product.brand.toLowerCase().includes(productType)
+      );
+    }
+    
+    return this.applyProductLimits(products, intentType);
+  }
+
+  private applyProductLimits(products: Product[], intentType?: string): Product[] {
+    if (intentType === 'categoria' || intentType === 'general') {
+      return products.slice(0, 3);
+    }
+    
+    if (products.length > 5 && intentType === 'general') {
+      return products.slice(0, 3);
+    }
+    
+    return products;
+  }
+
+  private findRelevantRecipes(searchTerm: string, recipeType?: string): Recipe[] {
+    let recipes: Recipe[] = [];
+    
+    if (recipeType) {
+      recipes = this.recipesService.searchRecipes(recipeType);
+    } else if (searchTerm) {
+      recipes = this.recipesService.searchRecipes(searchTerm);
+    } else {
+      recipes = this.recipesService.getEasyRecipes().slice(0, 3);
+    }
+    
+    return recipes.slice(0, 2);
+  }
+
+  private findRelevantOffers(searchTerm: string): Offer[] {
+    let offers: Offer[] = [];
+    
+    if (searchTerm) {
+      offers = this.offersService.searchOffers(searchTerm);
+    } else {
+      offers = this.offersService.getBestOffers();
+    }
+    
+    if (offers.length === 0) {
+      offers = this.offersService.getAllOffers().slice(0, 3);
+    }
+    
+    return offers.slice(0, 3);
+  }
+
+  // 🆕 MÉTODO PARA CLASIFICAR PRODUCTOS POR DISPONIBILIDAD
+  private classifyProductsByAvailability(ingredientList: string[]): { available: any[], unavailable: any[] } {
+    const available = [];
+    const unavailable = [];
+    const allProducts = this.productsService.getAllProducts();
+    
+    for (const ingredient of ingredientList) {
+      const foundProduct = allProducts.find(product => 
+        product.name.toLowerCase().includes(ingredient.toLowerCase()) ||
+        product.category.toLowerCase().includes(ingredient.toLowerCase())
+      );
+      
+      if (foundProduct) {
+        available.push({
+          name: foundProduct.name,
+          price: foundProduct.price,
+          brand: foundProduct.brand,
+          inOffer: foundProduct.inOffer,
+          offerPrice: foundProduct.offerPrice
+        });
+      } else {
+        const cleanIngredient = this.cleanIngredientName(ingredient);
+        if (cleanIngredient && cleanIngredient.length > 1) {
+          unavailable.push({
+            name: cleanIngredient,
+            status: 'No disponible en inventario'
+          });
+        }
+      }
+    }
+    
+    return { available, unavailable };
+  }
+
+  private cleanIngredientName(ingredient: string): string {
+    return ingredient
+      .replace(/[•\*\d\s](cucharaditas?|cucharadas?|tazas?|gramos?|ml|kg)?\s*de\s+/gi, '')
+      .replace(/^\s*\d+\s*/, '')
+      .replace(/[•\-\*]/g, '')
+      .trim();
+  }
+
+  private cleanRecipeText(recipeText: string): string {
+    let cleaned = recipeText
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/#{1,6}\s?/g, '')
+      .replace(/`(.*?)`/g, '$1')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    return cleaned;
+  }
+
+  private extractIngredientsFromRecipe(recipeText: string): string[] {
+    const cleanedText = this.cleanRecipeText(recipeText);
+    
+    const ingredientSectionMatch = cleanedText.match(/(ingredientes?:?|para\s+la\s+receta:?)(.*?)(?=preparación|instrucciones|pasos|procedimiento|$)/i);
+    
+    if (ingredientSectionMatch) {
+      const ingredientSection = ingredientSectionMatch[0];
+      
+      const ingredientPatterns = [
+        /•\s*([^•\n]+)/g,
+        /-\s*([^\n]+)/g,
+        /\*\s*([^\n]+)/g,
+        /(\d+[^•\n]*)/g
+      ];
+      
+      for (const pattern of ingredientPatterns) {
+        const matches = ingredientSection.match(pattern);
+        if (matches && matches.length > 0) {
+          return matches
+            .map(m => this.cleanIngredientName(m))
+            .filter(m => m.length > 2 && !m.includes(':') && !m.match(/^\d+$/))
+            .slice(0, 10);
+        }
+      }
+    }
+    
+    const commonIngredients = [
+      'arroz', 'pollo', 'cebolla', 'pimentón', 'caldo', 'arvejas', 'aceite', 
+      'sal', 'pimienta', 'colorante', 'ajo', 'zanahoria', 'tomate', 'queso',
+      'leche', 'harina', 'mantequilla', 'huevo', 'carne', 'pescado', 'pasta',
+      'fideos', 'limón', 'cilantro', 'perejil', 'orégano', 'albahaca'
+    ];
+    
+    const foundIngredients = commonIngredients.filter(ingredient => 
+      cleanedText.toLowerCase().includes(ingredient)
+    );
+    
+    return foundIngredients.length > 0 ? foundIngredients : [];
+  }
+
+  private createUnifiedRecipeResponse(recipeText: string, availableProducts: any[], unavailableProducts: any[]): string {
+    const cleanedRecipe = this.cleanRecipeText(recipeText);
+    
+    let response = "🍳 **Receta Completa**\n\n";
+    response += cleanedRecipe + "\n\n";
+    
+    if (availableProducts.length > 0) {
+      response += "✅ **Productos Disponibles en Líder**\n";
+      availableProducts.forEach(product => {
+        response += `• ${product.name} - ${product.brand} - $${product.inOffer ? product.offerPrice : product.price}`;
+        if (product.inOffer) response += " 🔥 OFERTA";
+        response += "\n";
+      });
+      response += "\n";
+    }
+    
+    if (unavailableProducts.length > 0) {
+      response += "❌ **Productos que Necesitas Comprar**\n";
+      unavailableProducts.forEach(product => {
+        response += `• ${product.name}\n`;
+      });
+    }
+    
+    return response;
+  }
+
+  private analyzeIntent(message: string): { 
+    hasProductIntent: boolean;
+    hasRecipeIntent: boolean;
+    hasOfferIntent: boolean;
+    searchTerm: string;
+    intentType: 'precio' | 'ubicacion' | 'ofertas' | 'general' | 'categoria' | 'receta';
+    specificProduct?: string;
+    productType?: string;
+    recipeType?: string;
+  } {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    const knownProducts = ['leche', 'arroz', 'aceite', 'té', 'atún', 'harina', 'queso', 'vino', 'mantequilla'];
+    const priceKeywords = ['precio', 'cuánto', 'vale', 'cuesta', 'valor'];
+    const locationKeywords = ['dónde', 'ubicación', 'pasillo', 'estante', 'sección', 'encuentro'];
+    const offerKeywords = ['oferta', 'descuento', 'promoción', 'rebaja', 'ofertas', 'barato', 'económico'];
+    const categoryKeywords = ['tipos', 'clases', 'variedades', 'categorías'];
+    
+    const recipeKeywords = ['receta', 'cocinar', 'preparar', 'hacer', 'cocina', 'cómo hacer', 'recetas', 'plato', 'comida', 'preparación'];
+    const specificRecipeKeywords = ['quesadilla', 'ensalada', 'marinada', 'pan', 'arroz', 'atún', 'carne', 'mediterránea', 
+                                   'lasaña', 'pastel', 'sopa', 'postre', 'torta', 'guiso', 'estofado', 'asado', 'parrilla'];
+    
+    let hasOfferIntent = offerKeywords.some(keyword => lowerMessage.includes(keyword));
+    
+    let hasRecipeIntent = false;
+    let recipeType = '';
+    
+    if (recipeKeywords.some(keyword => lowerMessage.includes(keyword))) {
+      hasRecipeIntent = true;
+      
+      const foundRecipe = specificRecipeKeywords.find(recipe => lowerMessage.includes(recipe));
+      if (foundRecipe) {
+        recipeType = foundRecipe;
+      } else {
+        if (lowerMessage.includes('atún')) recipeType = 'atún';
+        else if (lowerMessage.includes('queso')) recipeType = 'queso';
+        else if (lowerMessage.includes('vino')) recipeType = 'marinada';
+        else if (lowerMessage.includes('mantequilla')) recipeType = 'pan';
+        else if (lowerMessage.includes('arroz')) recipeType = 'arroz';
+        else if (lowerMessage.includes('pasta') || lowerMessage.includes('fideos')) recipeType = 'pasta';
+        else if (lowerMessage.includes('pollo')) recipeType = 'pollo';
+        else if (lowerMessage.includes('pescado')) recipeType = 'pescado';
+        else recipeType = 'general';
+      }
+    }
+    
+    let foundProduct = '';
+    let specificProduct = '';
+    let productType = '';
+    
+    knownProducts.forEach(product => {
+      if (lowerMessage.includes(product)) {
+        foundProduct = product;
+        const productMatch = this.findSpecificProduct(lowerMessage, product);
+        if (productMatch) specificProduct = productMatch;
+        const typeMatch = this.findProductType(lowerMessage, product);
+        if (typeMatch) productType = typeMatch;
+      }
+    });
+    
+    let intentType: 'precio' | 'ubicacion' | 'ofertas' | 'general' | 'categoria' | 'receta' = 'general';
+    
+    if (hasOfferIntent) {
+      intentType = 'ofertas';
+    } else if (hasRecipeIntent) {
+      intentType = 'receta';
+    } else if (priceKeywords.some(keyword => lowerMessage.includes(keyword))) {
+      intentType = 'precio';
+    } else if (locationKeywords.some(keyword => lowerMessage.includes(keyword))) {
+      intentType = 'ubicacion';
+    } else if (categoryKeywords.some(keyword => lowerMessage.includes(keyword)) || 
+               lowerMessage.includes('todas las') || 
+               lowerMessage.includes('todos los')) {
+      intentType = 'categoria';
+    }
+    
+    return {
+      hasProductIntent: !!foundProduct,
+      hasRecipeIntent,
+      hasOfferIntent,
+      searchTerm: foundProduct,
+      intentType,
+      specificProduct,
+      productType,
+      recipeType
+    };
+  }
+
+  async sendMessage() {
+    if (!this.userMessage.trim() || this.isLoading) return;
+
+    const userText = this.userMessage.trim();
+    this.isLoading = true;
+
+    try {
+      const intent = this.analyzeIntent(userText);
+      
+      let finalMessage = userText;
+      let relevantProducts: Product[] = [];
+      let relevantRecipes: Recipe[] = [];
+      let relevantOffers: Offer[] = [];
+      
+      // Lógica de búsqueda en los servicios locales
+      if (intent.hasProductIntent && (intent.intentType === 'precio' || intent.intentType === 'ubicacion')) {
+        relevantProducts = this.findPreciseProducts(
+          intent.searchTerm, 
+          intent.specificProduct,
+          intent.productType,
+          intent.intentType
+        );
+      }
+      
+      if (intent.hasOfferIntent || intent.intentType === 'ofertas') {
+        relevantOffers = this.findRelevantOffers(intent.searchTerm);
+      }
+      
+      if (intent.hasRecipeIntent) {
+        relevantRecipes = this.findRelevantRecipes(
+          intent.searchTerm,
+          intent.recipeType
+        );
+      }
+      
+      const shouldAddContext = 
+        (intent.intentType === 'precio' && relevantProducts.length > 0) ||
+        (intent.intentType === 'ubicacion' && relevantProducts.length > 0) ||
+        (intent.intentType === 'ofertas' && relevantOffers.length > 0) ||
+        (intent.intentType === 'receta');
+
+      if (shouldAddContext) {
+        finalMessage = this.createPreciseContext(
+          userText, 
+          relevantProducts, 
+          relevantRecipes, 
+          relevantOffers,
+          intent.intentType
+        );
+      }
+      
+      // ENVIAR A GEMINI con los datos de los servicios locales
+      const response: ApiResponse = await this.chatService.sendMessage(finalMessage, 'normal');
+      
+      // Procesar respuesta usando datos locales
+      if (intent.hasRecipeIntent) {
+        const ingredients = this.extractIngredientsFromRecipe(response.reply);
+        
+        if (ingredients.length > 0) {
+          const classifiedProducts = this.classifyProductsByAvailability(ingredients);
+          
+          const unifiedResponse = this.createUnifiedRecipeResponse(
+            response.reply,
+            classifiedProducts.available,
+            classifiedProducts.unavailable
+          );
+          
+          this.chatMessage = unifiedResponse;
+        } else {
+          this.chatMessage = this.cleanRecipeText(response.reply);
+        }
+      } else {
+        this.chatMessage = response.reply;
+      }
+
+    } catch (error) {
+      let errorMessage = 'Lo siento, hubo un error. Por favor intenta nuevamente.';
+      if (error instanceof Error) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      this.chatMessage = errorMessage;
+    } finally {
+      this.isLoading = false;
+      this.userMessage = '';
+    }
+  }
+
+  private createPreciseContext(userMessage: string, products: Product[], recipes: Recipe[], offers: Offer[], intentType: string): string {
+    let context = `Cliente pregunta: "${userMessage}"\n\n`;
+    
+    if (products.length > 0) {
+      const productDetails = products.map(product => {
+        const priceInfo = product.inOffer ? 
+          `💰 OFERTA: $${product.offerPrice} (Normal: $${product.price})` : 
+          `💰 Precio: $${product.price}`;
+        
+        const locationInfo = product.supermarketLocation ? 
+          `📍 ${product.supermarketLocation.aisle}, ${product.supermarketLocation.section}, ${product.supermarketLocation.shelf}` : '';
+        
+        return `🛒 ${product.name} ${product.brand}\n${priceInfo}\n${locationInfo}`;
+      }).join('\n\n');
+      
+      context += `INFORMACIÓN DE PRODUCTOS LÍDER:\n${productDetails}\n\n`;
+    }
+    
+    if (offers.length > 0) {
+      const offerDetails = offers.map(offer => {
+        if (offer.discount > 0) {
+          return `🔥 OFERTA ESPECIAL\n🛒 ${offer.product}\n💰 Precio original: $${offer.originalPrice} | OFERTA: $${offer.price}\n🎯 Ahorras: $${offer.originalPrice - offer.price} (${offer.discount}% de descuento)\n📦 Categoría: ${offer.category}\n⏰ Válido hasta: ${offer.validUntil}`;
+        } else {
+          return `🛒 ${offer.product}\n💰 Precio: $${offer.price}\n📦 Categoría: ${offer.category}\n⏰ Disponible hasta: ${offer.validUntil}`;
+        }
+      }).join('\n\n');
+      
+      context += `OFERTAS ACTUALES LÍDER:\n${offerDetails}\n\n`;
+    }
+    
+    if (recipes.length > 0) {
+      const recipeDetails = recipes.map(recipe => {
+        return `🍳 ${recipe.name}\n📝 ${recipe.description}\n⏱️ Tiempo: ${recipe.time} | Dificultad: ${recipe.difficulty}\n🥘 Categoría: ${recipe.category}\n📋 Ingrediente principal: ${recipe.mainIngredient}\n🛒 INGREDIENTES EXACTOS:\n${recipe.ingredients.map(ing => `• ${ing}`).join('\n')}\n👩‍🍳 PASOS EXACTOS:\n${recipe.steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}`;
+      }).join('\n\n');
+      
+      context += `RECETAS OFICIALES LÍDER:\n${recipeDetails}\n\n`;
+    }
+    
+    let contextInstruction = '';
+    switch (intentType) {
+      case 'precio':
+        contextInstruction = 'Responde enfocándote SOLO en los precios exactos y ofertas.';
+        break;
+      case 'ubicacion':
+        contextInstruction = 'Responde enfocándote SOLO en las ubicaciones exactas dentro de la tienda.';
+        break;
+      case 'ofertas':
+        contextInstruction = 'Responde destacando SOLO las ofertas actuales. Menciona precios originales, precios de oferta, ahorros y fechas de vencimiento. Sé entusiasta con los descuentos.';
+        break;
+      case 'categoria':
+        contextInstruction = 'Responde mostrando una variedad representativa (máximo 3 productos).';
+        break;
+      case 'receta':
+        contextInstruction = 'Proporciona una receta completa y deliciosa con pasos detallados. Sé entusiasta y amigable en tu explicación. Incluye una sección clara de ingredientes.';
+        break;
+      default:
+        contextInstruction = 'Responde con información balanceada y útil.';
+    }
+    
+    context += `INSTRUCCIÓN: ${contextInstruction}\n\nResponde como Liderín de manera alegre y servicial.`;
+    
+    return context;
   }
 }

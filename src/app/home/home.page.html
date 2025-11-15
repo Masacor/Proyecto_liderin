@@ -17,10 +17,12 @@
   <div class="container">
     <!-- Layout con avatar y opciones -->
     <div class="chat-layout">
-      <!-- Avatar Liderin -->
+      
+      <!-- Avatar Liderin - SIEMPRE VISIBLE -->
       <div class="avatar-section">
+        
         <!-- Selector de avatar - ARRIBA -->
-        <div class="avatar-selector-minimal">
+        <div class="avatar-selector-minimal" *ngIf="!isInConversation">
           <div class="selector-label">
             <ion-icon name="person-circle-outline"></ion-icon>
             <span>Elige tu avatar</span>
@@ -30,9 +32,7 @@
                     [class.active]="currentAvatar === 'assets/images/liderin.png'"
                     (click)="changeAvatar('assets/images/liderin.png')">
               <ion-icon name="sparkles"></ion-icon>
-              <span>Avatar 1
-          
-              </span>
+              <span>Avatar 1</span>
             </button>
             <button class="selector-btn" 
                     [class.active]="currentAvatar === 'assets/images/liderin2.png'"
@@ -45,49 +45,84 @@
 
         <img [src]="currentAvatar" alt="Liderin" class="avatar-img">
         
-        <div class="avatar-bubble">
-          <p>¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?</p>
+        <!-- Input de chat integrado -->
+        <div class="integrated-chat-input" *ngIf="showChatInput">
+          <ion-textarea
+            [(ngModel)]="userMessage"
+            placeholder="Escribe tu mensaje a Liderín..."
+            rows="1"
+            autoGrow="true"
+            (keyup.enter)="sendMessage()"
+          ></ion-textarea>
+          <ion-button (click)="sendMessage()" [disabled]="!userMessage.trim() || isLoading">
+            <ion-icon name="send"></ion-icon>
+          </ion-button>
         </div>
       </div>
 
-      <!-- Opciones de conversación -->
-      <div class="options-section">
-        <h2>Conversa conmigo para poder ayudarte</h2>
+      <!-- 🆕 CONTENIDO DINÁMICO: OPCIONES O RESPUESTA DEL CHAT -->
+      <div class="content-section">
         
-      
-        <ion-list class="options-list">
-          <!-- Opción principal -->
-          <ion-item button class="main-option" lines="none">
-            <ion-icon slot="start" name="chatbubbles"></ion-icon>
-            <ion-label>Comenzar a conversar</ion-label>
-          </ion-item>
+        <!-- OPCIONES DE CONVERSACIÓN - SE OCULTAN CUANDO SE CONVERSA -->
+        <div class="options-section" *ngIf="!isInConversation">
+          <h2>Conversa conmigo para poder ayudarte</h2>
+          
+          <ion-list class="options-list">
+            <!-- Opción principal -->
+            <ion-item button class="main-option" lines="none" (click)="startConversation()">
+              <ion-icon slot="start" name="chatbubbles"></ion-icon>
+              <ion-label>Comenzar a conversar</ion-label>
+            </ion-item>
 
-          <!-- Opciones secundarias -->
-          <ion-item button class="secondary-option" lines="none" (click)="navigateToPriceCheck()">
-            <ion-icon slot="start" name="pricetag"></ion-icon>
-            <ion-label>Pregúntame por el precio de un producto</ion-label>
-          </ion-item>
+            <!-- Opciones secundarias -->
+            <ion-item button class="secondary-option" lines="none" (click)="navigateToPriceCheck()">
+              <ion-icon slot="start" name="pricetag"></ion-icon>
+              <ion-label>Pregúntame por el precio de un producto</ion-label>
+            </ion-item>
 
-          <ion-item button class="secondary-option" lines="none" (click)="navigateToStoreLocator()">
-            <ion-icon slot="start" name="location"></ion-icon>
-            <ion-label>Pregúntame dónde comprar un producto</ion-label>
-          </ion-item>
+            <ion-item button class="secondary-option" lines="none" (click)="navigateToStoreLocator()">
+              <ion-icon slot="start" name="location"></ion-icon>
+              <ion-label>Pregúntame dónde comprar un producto</ion-label>
+            </ion-item>
 
-          <ion-item button class="secondary-option" lines="none" (click)="navigateToOffers()">
-            <ion-icon slot="start" name="megaphone"></ion-icon>
-            <ion-label>Pregúntame por ofertas</ion-label>
-          </ion-item>
+            <ion-item button class="secondary-option" lines="none" (click)="navigateToOffers()">
+              <ion-icon slot="start" name="megaphone"></ion-icon>
+              <ion-label>Pregúntame por ofertas</ion-label>
+            </ion-item>
 
-          <ion-item button class="secondary-option" lines="none" (click)="navigateToRecipes()">
-            <ion-icon slot="start" name="restaurant"></ion-icon>
-            <ion-label>Pregúntame como hacer una receta de cocina</ion-label>
-          </ion-item>
+            <ion-item button class="secondary-option" lines="none" (click)="navigateToRecipes()">
+              <ion-icon slot="start" name="restaurant"></ion-icon>
+              <ion-label>Pregúntame como hacer una receta de cocina</ion-label>
+            </ion-item>
 
-          <ion-item button class="secondary-option" lines="none" (click)="navigateToAppDownload()">
-            <ion-icon slot="start" name="phone-portrait"></ion-icon>
-            <ion-label>Descarga nuestra App Móvil para registrar tus compras</ion-label>
-          </ion-item>
-        </ion-list>
+            <ion-item button class="secondary-option" lines="none" (click)="navigateToAppDownload()">
+              <ion-icon slot="start" name="phone-portrait"></ion-icon>
+              <ion-label>Descarga nuestra App Móvil para registrar tus compras</ion-label>
+            </ion-item>
+          </ion-list>
+        </div>
+
+        <!-- 🆕 RESPUESTA DEL CHAT - APARECE CUANDO SE CONVERSA -->
+        <div class="chat-response-section" *ngIf="isInConversation">
+          
+          <!-- Cabecera con botón para volver -->
+          <div class="chat-header">
+            <ion-button fill="clear" size="small" (click)="endConversation()">
+              <ion-icon name="arrow-back" slot="start"></ion-icon>
+              Volver a opciones
+            </ion-button>
+          </div>
+
+          <!-- Cuadro de texto del avatar -->
+          <div class="avatar-bubble-response">
+            <p>{{ chatMessage }}</p>
+            <div class="typing-indicator" *ngIf="isLoading">
+              <ion-spinner name="crescent"></ion-spinner>
+              <span>Liderín está escribiendo...</span>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   </div>

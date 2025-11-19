@@ -1,233 +1,355 @@
-// Barra azul superior
-.blue-toolbar {
-  --background: #0071ce;
-  --min-height: 70px;
-  --border-width: 0;
-  
-  .header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    height: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    
-    .logo-section .logo {
-      height: 40px;
-      width: auto;
-      max-width: 150px;
-      cursor: pointer;
-    }
-    
-    .title-section .page-title {
-      color: rgb(255, 255, 255);
-      font-size: 24px;
-      font-weight: 600;
-      margin: 0;
-    }
-    
-    .empty-space {
-      width: 150px;
-    }
-  }
+/* ===================================================================== */
+/* FORZAR MODO CLARO SIEMPRE — IGNORAR MODO OSCURO DEL DISPOSITIVO       */
+/* ===================================================================== */
+:root, :host, html, body {
+  color-scheme: light !important;
+  background-color: #ffffff !important;
 }
 
+/* Fondo global */
+ion-content {
+  --background: #ffffff !important;
+  background: #ffffff !important;
+}
+
+/* ===================================================================== */
+/* BARRA AZUL SUPERIOR */
+/* ===================================================================== */
+.blue-toolbar {
+  --background: #0071ce !important;
+  --min-height: 70px;
+  --border-width: 0;
+  background: #0071ce !important;
+}
+
+.blue-toolbar .header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.blue-toolbar .header-content .logo-section .logo {
+  height: 40px;
+  max-width: 150px;
+  cursor: pointer;
+}
+
+.blue-toolbar .header-content .title-section .page-title {
+  color: #ffffff !important;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* ===================================================================== */
+/* CONTENEDOR PRINCIPAL */
+/* ===================================================================== */
 .container {
   padding: 16px;
   max-width: 600px;
   margin: 0 auto;
+  background: #ffffff !important;
 }
 
 h2 {
   text-align: center;
-  color: #2c3e50;
+  color: #2c3e50 !important;
   margin-bottom: 24px;
   font-weight: 600;
 }
 
+/* ===================================================================== */
+/* BUSCADOR */
+/* ===================================================================== */
 .search-section {
   margin-bottom: 24px;
-  
-  ion-item {
-    --background: transparent;
-    margin-bottom: 16px;
-    
-    ion-input {
-      --background: white;
-      --padding-start: 16px;
-      --padding-end: 16px;
-      --padding-top: 12px;
-      --padding-bottom: 12px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-  }
 }
 
+/* Neutralización total de ion-item */
+.search-section ion-item {
+  --background: #ffffff !important;
+  --color: #000000 !important;
+  --border-color: transparent !important;
+  --highlight-color-focused: transparent !important;
+  --highlight-height: 0 !important;
+  --transition: none !important;
+  color-scheme: light !important;
+  margin-bottom: 16px;
+}
+
+/* Evitar estilo oscuro del contenedor interno */
+.search-section ion-item::part(container) {
+  background: #ffffff !important;
+  color-scheme: light !important;
+}
+
+/* INPUT PRINCIPAL */
+.search-section ion-input {
+  --background: #ffffff !important;
+  --color: #000000 !important;
+  --placeholder-color: #666666 !important;
+  --placeholder-opacity: 1 !important;
+  --highlight-color-focused: #000000 !important;
+
+  color: #000000 !important;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Forzar host interno del input */
+.search-section ion-input::part(native) {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Texto escrito */
+.search-section ion-input::part(input) {
+  color: #000000 !important;
+  caret-color: #000000 !important;
+}
+
+/* Placeholder */
+.search-section ion-input::part(placeholder) {
+  color: #666666 !important;
+  opacity: 1 !important;
+}
+
+/* ===================================================================== */
+/* LOADING */
+/* ===================================================================== */
 .loading {
   text-align: center;
   padding: 40px;
-  
-  ion-spinner {
-    margin-bottom: 16px;
-  }
+  background: #ffffff !important;
 }
 
+.loading ion-spinner {
+  margin-bottom: 16px;
+  --color: #3880ff !important;
+}
+
+.loading p {
+  color: #2c3e50 !important;
+}
+
+/* ===================================================================== */
+/* RESULTADOS */
+/* ===================================================================== */
 .results-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
-  h3 {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #2c3e50;
-  }
+  background: #ffffff !important;
 }
 
+.results-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2c3e50 !important;
+}
+
+/* ===================================================================== */
+/* SIN RESULTADOS */
+/* ===================================================================== */
 .no-results {
   text-align: center;
   padding: 60px 20px;
-  color: #7f8c8d;
-  
-  ion-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-    color: #bdc3c7;
-  }
-  
-  h4 {
-    margin: 0 0 8px 0;
-  }
+  color: #7f8c8d !important;
+  background: #ffffff !important;
 }
 
+.no-results ion-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  color: #bdc3c7 !important;
+}
+
+.no-results h4 {
+  margin: 0 0 8px;
+  color: #2c3e50 !important;
+}
+
+/* ===================================================================== */
+/* LISTA DE PRODUCTOS */
+/* ===================================================================== */
 .products-list {
   display: grid;
   gap: 16px;
+  background: #ffffff !important;
 }
 
 .product-card {
   cursor: pointer;
   transition: transform 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-  }
-  
-  .product-info {
-    p {
-      margin: 8px 0 0 0;
-      color: #7f8c8d;
-      font-size: 14px;
-    }
-  }
+  background: #ffffff !important;
 }
 
+.product-card:hover {
+  transform: translateY(-2px);
+}
+
+.product-card .product-info p {
+  margin: 8px 0 0;
+  color: #7f8c8d !important;
+}
+
+/* ===================================================================== */
+/* DETALLES Y UBICACIÓN */
+/* ===================================================================== */
 .location-details {
-  .location-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-    
-    h3 {
-      margin: 0;
-      color: #2c3e50;
-    }
-  }
+  background: #ffffff !important;
+}
+
+.location-header h3 {
+  margin: 0;
+  color: #2c3e50 !important;
 }
 
 .location-card {
-  .location-icon {
-    text-align: center;
-    margin-bottom: 16px;
-    
-    .aisle-icon {
-      font-size: 48px;
-      display: inline-block;
-    }
-  }
+  background: #ffffff !important;
 }
 
-.location-steps {
-  .step {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 20px;
-    padding: 16px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    
-    .step-number {
-      width: 32px;
-      height: 32px;
-      background: #3880ff;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-    
-    .step-content {
-      flex: 1;
-      
-      .step-highlight {
-        display: block;
-        color: #3880ff;
-        font-weight: 600;
-        font-size: 1.1em;
-        margin-top: 4px;
-      }
-    }
-  }
+.location-icon .aisle-icon {
+  font-size: 48px;
+  color: #3880ff !important;
 }
 
+/* ===================================================================== */
+/* PASOS */
+/* ===================================================================== */
+.location-steps .step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #010407 !important;
+  border-radius: 12px;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  background: #3880ff !important;
+  color: white !important;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.step-content {
+  flex: 1;
+  color: #2c3e50 !important;
+}
+
+.step-highlight {
+  display: block;
+  color: #3880ff !important;
+  font-weight: 600;
+  font-size: 1.1em;
+  margin-top: 4px;
+}
+
+/* ===================================================================== */
+/* INFO EXTRA */
+/* ===================================================================== */
 .additional-info {
   margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: #060101 !important;
+}
+
+.additional-info p {
+  color: #2c3e50 !important;
 }
 
 .location-tips {
   margin-top: 24px;
   padding: 20px;
-  background: #e3f2fd;
+  background: #020506 !important;
   border-radius: 12px;
-  
-  h4 {
-    margin: 0 0 12px 0;
-    color: #1976d2;
-  }
-  
-  ul {
-    margin: 0;
-    padding-left: 20px;
-    
-    li {
-      margin-bottom: 8px;
-      color: #455a64;
-    }
-  }
 }
 
-// Responsive
+.location-tips h4 {
+  margin-bottom: 12px;
+  color: #1976d2 !important;
+}
+
+.location-tips li {
+  margin-bottom: 8px;
+  color: #455a64 !important;
+}
+
+/* ===================================================================== */
+/* COMPONENTES IONIC */
+/* ===================================================================== */
+ion-card {
+  --background: #140505 !important;
+  background: #ffffff !important;
+  color: #2c3e50 !important;
+}
+
+ion-card-header,
+ion-card-content {
+  --background: #050101 !important;
+  background: #ffffff !important;
+}
+
+ion-card-title {
+  color: #010204 !important;
+}
+
+ion-card-subtitle {
+  color: #010204 !important;
+}
+
+ion-item {
+  --background: transparent !important;
+}
+
+ion-button {
+  --background: #3880ff !important;
+  --color: black !important;
+}
+
+ion-chip {
+  --background: #3880ff !important;
+  --color: black !important;
+}
+
+ion-text,
+p, span, div, h1, h2, h3, h4, h5, h6, strong, label {
+  color: #2c3e50 !important;
+}
+
+/* ===================================================================== */
+/* RESPONSIVE */
+/* ===================================================================== */
 @media (max-width: 768px) {
   .container {
     padding: 12px;
+    background: #010204 !important;
   }
-  
+
   .location-steps .step {
     flex-direction: column;
     text-align: center;
     gap: 12px;
+    background: #010204 !important;
   }
 }

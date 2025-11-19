@@ -1,266 +1,300 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
-import { 
-  IonHeader, IonToolbar, IonTitle, IonContent, 
-  IonButton, IonInput, IonItem, IonCard, 
-  IonCardTitle, IonCardContent, IonIcon, 
-  IonButtons, IonBackButton, IonSpinner, IonCardSubtitle
-} from '@ionic/angular/standalone';
-import { RouterModule } from '@angular/router';
-import { addIcons } from 'ionicons';
-import { barcode, search, camera, close, scan, qrCode } from 'ionicons/icons';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+// src/app/price-check/price-check.page.ts
 
-import { ProductsService, Product } from '../services/products';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, NgZone } from '@angular/core';
+import { Product, ProductsService } from '../services/products';
+import { 
+  IonHeader, 
+  IonToolbar, 
+  IonContent, 
+  IonButton, 
+  IonIcon, 
+  IonInput, 
+  IonItem, 
+  IonCard, 
+  IonCardTitle, 
+  IonCardSubtitle, 
+  IonCardContent, 
+  IonSpinner 
+} from '@ionic/angular/standalone';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+
+// ZXing
+import { BrowserMultiFormatReader } from '@zxing/library';
 
 @Component({
-  selector: 'app-price-check',
+  selector: 'app-price-checker',
   templateUrl: './price-check.page.html',
   styleUrls: ['./price-check.page.scss'],
   standalone: true,
   imports: [
-    RouterModule, IonHeader, IonToolbar, IonTitle, IonContent,
-    IonButton, IonInput, IonItem, IonCard, 
-    IonCardTitle, IonCardContent, IonIcon, 
-    IonButtons, IonBackButton, IonSpinner, IonCardSubtitle, // ✅ Agregado IonCardSubtitle
-    FormsModule,
-    CommonModule
-  ]
+    CommonModule, 
+    FormsModule, 
+    RouterLink,
+    IonHeader, 
+    IonToolbar, 
+    IonContent, 
+    IonButton, 
+    IonIcon, 
+    IonInput, 
+    IonItem, 
+    IonCard, 
+    IonCardTitle, 
+    IonCardSubtitle, 
+    IonCardContent,
+    IonSpinner
+  ],
 })
-export class PriceCheckPage {
-  @ViewChild('videoElement') videoElement!: ElementRef<HTMLVideoElement>;
-  @ViewChild('canvasElement') canvasElement!: ElementRef<HTMLCanvasElement>;
+export class PriceCheckerPage implements OnInit, OnDestroy {
+  // --- ViewChilds para cámara ---
+  @ViewChild('videoElement', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvasElement', { static: false }) canvasElement!: ElementRef<HTMLCanvasElement>;
+
+  // Variables de control de estado de la UI
+  isScanning: boolean = false; 
+  isLoading: boolean = false; 
+  showResults: boolean = false; 
+  hasSearched: boolean = false;
   
-  productName: string = '';
-  searchResults: Product[] = [];
-  isLoading: boolean = false;
-  showResults: boolean = false;
-  scannedBarcode: string = '';
-  isScanning: boolean = false;
-  scanError: string = '';
-  showManualInput: boolean = false;
-  manualBarcode: string = '';
-  
+  // Variables de datos y errores
+  productName: string = ''; 
+  scanError: string | null = null; 
+  scannedBarcode: string | null = null; 
+  searchResults: Product[] = []; 
+
+  // ZXing
+  private codeReader: BrowserMultiFormatReader | null = null;
   private mediaStream: MediaStream | null = null;
-  private scanInterval: any = null;
-  private scanAttempts: number = 0;
-  private maxScanAttempts: number = 10;
+  private scanTimeout: any = null;
 
-  constructor(private productsService: ProductsService) {
-    addIcons({ barcode, search, camera, close, scan, qrCode });
+  constructor(private productsService: ProductsService, private ngZone: NgZone) {}
+
+  ngOnInit() {}
+
+  ngOnDestroy() {
+    this.stopScanner(false);
   }
 
-  // 🔍 BUSCAR POR TEXTO
-  async searchProduct() {
-    if (!this.productName.trim()) return;
-    
-    this.stopScanner();
+  // ------------------------------------------------------------------
+  // 🖼️ Manejo de Imágenes
+  // ------------------------------------------------------------------
+  handleImageError(event: any) {
+    const fallbackImage = 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=300&fit=crop';
+    event.target.src = fallbackImage;
+  }
+
+  // ------------------------------------------------------------------
+  // 🔍 Lógica de Búsqueda por Nombre
+  // ------------------------------------------------------------------
+  searchProduct() {
+    this.clearState();
+    const query = this.productName.trim();
+
+    if (!query) {
+      this.scanError = 'Por favor, ingresa un nombre o marca para buscar.';
+      return;
+    }
+
     this.isLoading = true;
-    this.showResults = false;
-    this.scannedBarcode = '';
-    this.scanError = '';
-    
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    this.searchResults = this.productsService.searchProducts(this.productName);
-    this.isLoading = false;
-    this.showResults = true;
+    this.hasSearched = true;
+
+    setTimeout(() => {
+      this.searchResults = this.productsService.searchProducts(query);
+      this.isLoading = false;
+      this.showResults = true;
+      this.scannedBarcode = null;
+
+      if (this.searchResults.length === 0) {
+        this.scanError = `No se encontraron resultados para "${query}".`;
+      } else {
+        this.scanError = null;
+      }
+    }, 600);
   }
 
-  // 📷 ESCANEAR CÓDIGO DE BARRAS CON CÁMARA NATIVA
+  searchProducts() {
+    this.searchProduct();
+  }
+
+  // ------------------------------------------------------------------
+  // 📸 Escaneo real con ZXing
+  // ------------------------------------------------------------------
+
+  /**
+   * Inicia el escaneo usando ZXing (cámara real).
+   * Selecciona preferentemente la cámara trasera y establece timeout de seguridad.
+   */
   async startBarcodeScan() {
-    this.stopScanner();
+    this.clearState();
     this.isScanning = true;
-    this.isLoading = true;
-    this.showResults = false;
-    this.scanError = '';
-    this.scanAttempts = 0;
+    this.scanError = null;
+    this.scannedBarcode = null;
+
+    // crear lector
+    this.codeReader = new BrowserMultiFormatReader();
 
     try {
-      if (!this.isCameraSupported()) {
-        throw new Error('Cámara no compatible');
+      // listar dispositivos y elegir trasera si existe
+      const devices = await this.codeReader.listVideoInputDevices();
+      let deviceId: string | null = null;
+
+      if (devices && devices.length > 0) {
+        const rear = devices.find(d => /back|rear|environment/gi.test(d.label));
+        deviceId = (rear && rear.deviceId) || devices[0].deviceId;
       }
 
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
+      const video = this.videoElement.nativeElement;
+
+      // Intentar usar decodeFromVideoDevice (stream + callback)
+      // decodeFromVideoDevice libera la cámara cuando codeReader.reset() es llamado.
+      this.codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
+        // Callback ocurre fuera de zone; pasar a NgZone para updates Angular
+        this.ngZone.run(() => {
+          if (result) {
+            const code = result.getText();
+            // detener e iniciar búsqueda
+            this.scannedBarcode = code;
+            this.stopScanner(true);
+          } else if (err && (err.name && err.name !== 'NotFoundException')) {
+            // Otros errores de ZXing se loguean (NotFoundException es normal mientras no detecta)
+            console.warn('ZXing error:', err);
+          }
+        });
       });
 
-      this.videoElement.nativeElement.srcObject = this.mediaStream;
-      await this.videoElement.nativeElement.play();
-      
-      this.isLoading = false;
-      this.startBarcodeDetection();
+      // Guardar mediaStream si está disponible (para asegurarnos poder detenerlo)
+      // decodeFromVideoDevice internamente asigna el stream al video; lo extraemos
+      // después de un tick
+      setTimeout(() => {
+        try {
+          const stream = video.srcObject as MediaStream;
+          if (stream) this.mediaStream = stream;
+        } catch (e) {
+          // ignore
+        }
+      }, 300);
 
-    } catch (error) {
-      this.handleCameraError(error);
-    }
-  }
+      // Timeout de seguridad: si no detecta en X ms, detiene y muestra opciones
+      const TIMEOUT_MS = 15000; // 15s
+      this.scanTimeout = setTimeout(() => {
+        this.ngZone.run(() => {
+          if (this.isScanning) {
+            this.scanError = 'No se detectó ningún código. Intenta mejorar la iluminación o ajusta la distancia.';
+            this.stopScanner(false);
+          }
+        });
+      }, TIMEOUT_MS);
 
-  // 🔧 VERIFICAR SI LA CÁMARA ES COMPATIBLE
-  private isCameraSupported(): boolean {
-    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  }
-
-  // 🔄 INICIAR DETECCIÓN DE CÓDIGOS
-  private startBarcodeDetection() {
-    this.scanInterval = setInterval(() => {
-      this.scanAttempts++;
-      this.analyzeCameraFrame();
-      
-      if (this.scanAttempts >= this.maxScanAttempts && !this.scannedBarcode) {
-        this.offerManualInput();
-      }
-    }, 1000);
-  }
-
-  // 🖼️ ANALIZAR FRAME DE LA CÁMARA
-  private analyzeCameraFrame() {
-    const video = this.videoElement.nativeElement;
-    const canvas = this.canvasElement.nativeElement;
-    const context = canvas.getContext('2d');
-
-    if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    if (this.scanAttempts === 3) {
-      this.simulateBarcodeDetection();
-    }
-  }
-
-  // 🎯 SIMULAR DETECCIÓN
-  private simulateBarcodeDetection() {
-    if (this.scannedBarcode) return;
-    this.offerBarcodeSelection();
-  }
-
-  // 🔢 OFRECER SELECCIÓN DE CÓDIGOS
-  private offerBarcodeSelection() {
-    this.stopScanner();
-    
-    const allProducts = this.productsService.getAllProducts();
-    const productNames = allProducts.map(p => `${p.barcode} - ${p.name} (${p.brand})`);
-    
-    const selectedIndex = prompt(
-      `🔍 Cámara activada. Selecciona el producto:\n\n` +
-      productNames.map((name, index) => `${index + 1}. ${name}`).join('\n') +
-      `\n\nO ingresa un código manualmente:`,
-      '1'
-    );
-
-    if (selectedIndex !== null) {
-      const index = parseInt(selectedIndex) - 1;
-      
-      if (index >= 0 && index < allProducts.length) {
-        this.processScannedBarcode(allProducts[index].barcode);
-      } else if (selectedIndex.trim() !== '') {
-        this.processScannedBarcode(selectedIndex.trim());
-      } else {
-        this.isScanning = false;
-      }
-    } else {
+    } catch (error: any) {
+      console.error('Error iniciando cámara / ZXing:', error);
+      this.scanError = 'No se pudo iniciar la cámara. Revisa permisos o el hardware.';
       this.isScanning = false;
+      // Aseguramos limpieza
+      try { this.codeReader?.reset(); } catch {}
     }
   }
 
-  // ✅ PROCESAR CÓDIGO ESCANEADO
-  private processScannedBarcode(barcode: string) {
-    this.scannedBarcode = barcode;
-    const product = this.productsService.findProductByBarcode(barcode);
-    
-    if (product) {
-      this.searchResults = [product];
-      this.scanError = '';
-    } else {
-      this.searchResults = [];
-      this.scanError = `Producto con código "${barcode}" no encontrado`;
+  /**
+   * Detiene el escáner y libera recursos.
+   * Si proceedToSearch === true y hay scannedBarcode, ejecuta búsqueda por código.
+   */
+  stopScanner(proceedToSearch: boolean = false) {
+    // marcar como no escaneando
+    this.isScanning = false;
+
+    // limpiar timeout
+    if (this.scanTimeout) {
+      clearTimeout(this.scanTimeout);
+      this.scanTimeout = null;
     }
-    
+
+    // reset ZXing
+    try {
+      if (this.codeReader) {
+        this.codeReader.reset(); // detiene decodeFromVideoDevice y libera cámara
+        this.codeReader = null;
+      }
+    } catch (err) {
+      console.warn('Error reseteando ZXing:', err);
+    }
+
+    // detener mediaStream si existe
+    try {
+      if (this.mediaStream) {
+        this.mediaStream.getTracks().forEach(t => t.stop());
+        this.mediaStream = null;
+      }
+
+      if (this.videoElement && this.videoElement.nativeElement) {
+        this.videoElement.nativeElement.srcObject = null;
+      }
+    } catch (err) {
+      console.warn('Error deteniendo mediaStream:', err);
+    }
+
+    // si se detectó código y se pide proceder, buscar
+    if (proceedToSearch && this.scannedBarcode) {
+      // Ejecutar búsqueda por código
+      this.searchProductByBarcode(this.scannedBarcode);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 🔎 Búsqueda por código
+  // ------------------------------------------------------------------
+  searchProductByBarcode(barcode: string) {
+    this.isLoading = true;
     this.showResults = true;
-    this.isScanning = false;
-  }
+    this.hasSearched = true;
+    this.scanError = null;
 
-  // ⌨️ OFRECER ENTRADA MANUAL DIRECTA
-  private offerManualInput() {
-    this.stopScanner();
-    
-    const manualCode = prompt(
-      '🔍 Ingresa el código de barras manualmente:\n\n' +
-      'Ejemplos de códigos en tu sistema:\n' +
-      '• 7801234567890 - Leche Entera Soprole\n' +
-      '• 7801875032010 - Té Supremo\n' +
-      '• 7801234567894 - Aceite Maravilla Chef',
-      '7801234567890'
-    );
-
-    if (manualCode && manualCode.trim()) {
-      this.processScannedBarcode(manualCode.trim());
-    } else {
-      this.isScanning = false;
-    }
-  }
-
-  // ❌ MANEJAR ERRORES DE CÁMARA
-  private handleCameraError(error: any) {
-    console.error('Error de cámara:', error);
-    
-    let errorMessage = 'Error al acceder a la cámara';
-    
-    if (error.name === 'NotAllowedError') {
-      errorMessage = 'Permiso de cámara denegado';
-    } else if (error.name === 'NotFoundError') {
-      errorMessage = 'No se encontró cámara';
-    }
-    
-    this.scanError = errorMessage;
-    this.isScanning = false;
-    this.isLoading = false;
-    
+    // Query simulada / pequeña latencia para UX
     setTimeout(() => {
-      this.offerManualInput();
-    }, 2000);
+      const product = this.productsService.findProductByBarcode(barcode);
+
+      if (product) {
+        this.searchResults = [product];
+        this.productName = product.name;
+        this.scanError = null;
+      } else {
+        this.searchResults = [];
+        this.scanError = `El código "${barcode}" no se encontró en la base de datos de precios.`;
+        this.productName = '';
+      }
+
+      this.isLoading = false;
+    }, 600);
   }
 
-  // 🛑 DETENER CÁMARA Y LIMPIAR - CAMBIADO A PÚBLICO
-  stopScanner() {
-    if (this.scanInterval) {
-      clearInterval(this.scanInterval);
-      this.scanInterval = null;
-    }
-    
-    if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
-      this.mediaStream = null;
-    }
-    
-    if (this.videoElement?.nativeElement) {
-      this.videoElement.nativeElement.srcObject = null;
-    }
-    
-    this.scanAttempts = 0;
-  }
-
-  // 🧹 LIMPIAR BÚSQUEDA
-  clearSearch() {
-    this.stopScanner();
-    this.productName = '';
-    this.searchResults = [];
-    this.showResults = false;
-    this.scannedBarcode = '';
-    this.scanError = '';
+  // ------------------------------------------------------------------
+  // 🧹 Utilidades
+  // ------------------------------------------------------------------
+  clearState() {
     this.isLoading = false;
-    this.showManualInput = false;
-    this.manualBarcode = '';
+    this.showResults = false;
+    this.hasSearched = false;
+    this.scanError = null;
+    this.scannedBarcode = null;
+    this.searchResults = [];
   }
 
-  // 📱 AL SALIR DE LA PÁGINA
-  ionViewWillLeave() {
-    this.stopScanner();
+  clearSearch() {
+    this.productName = '';
+    this.clearState();
+    this.stopScanner(false);
+  }
+
+  get searchQuery(): string {
+    return this.productName;
+  }
+
+  set searchQuery(value: string) {
+    this.productName = value;
+  }
+
+  // método auxiliar para debug
+  testService() {
+    console.log('Productos:', this.productsService.getAllProducts());
   }
 }

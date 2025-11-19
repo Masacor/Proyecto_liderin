@@ -26,23 +26,8 @@
     <div class="qr-section">
       <h3>Escanea para descargar la app</h3>
       <img [src]="qrCodes.directDownload" alt="QR Descarga Directa" class="qr-code">
-      <p>Descarga directa de la aplicación</p>
-      <ion-button expand="block" (click)="downloadDirect()">
-        <ion-icon name="download" slot="start"></ion-icon>
-        Descargar Ahora
-      </ion-button>
     </div>
 
-    <!-- QR 2: Play Store -->
-    <div class="qr-section">
-      <h3>Disponible en Play Store</h3>
-      <img [src]="qrCodes.playStore" alt="QR Play Store" class="qr-code">
-      <p>Descarga desde Google Play Store</p>
-      <ion-button expand="block" color="success" (click)="openPlayStore()">
-        <ion-icon name="logo-google-playstore" slot="start"></ion-icon>
-        Abrir Play Store
-      </ion-button>
-    </div>
 
   </div>
 </ion-content>

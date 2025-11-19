@@ -1,191 +1,258 @@
+<!-- Barra azul superior -->
 <ion-header [translucent]="true">
-  <!-- Barra azul superior con logo -->
   <ion-toolbar class="blue-toolbar">
     <div class="header-content">
-      <!-- Logo Líder a la izquierda -->
       <div class="logo-section">
-        <img src="https://i5.walmartimages.com/dfw/63fd9f59-4a2e/587a39f4-fa04-49c6-b70f-ed494f49ff69/v1/chile-walmart-od-logo.svg" 
-             alt="Líder" 
-             class="logo" 
-             routerLink="/home"
-             style="cursor: pointer;">
+        <ion-button fill="clear" class="logo-button" [routerLink]="['/home']">
+          <img 
+            src="https://i5.walmartimages.com/dfw/63fd9f59-4a2e/587a39f4-fa04-49c6-b70f-ed494f49ff69/v1/chile-walmart-od-logo.svg" 
+            alt="Líder" 
+            class="logo">
+        </ion-button>
       </div>
-      <!-- Espacio vacío para balancear -->
-      <div class="empty-space"></div>
     </div>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <!-- MODO CÁMARA ACTIVA -->
-  <div class="camera-mode" *ngIf="isScanning">
-    <video #videoElement autoplay playsinline class="camera-view"></video>
-    <canvas #canvasElement class="hidden-canvas"></canvas>
+<ion-content [fullscreen]="true" class="search-mode">
+  <div class="container">
     
-    <div class="scanner-overlay">
-      <div class="scanner-frame">
-        <div class="scanning-laser"></div>
-        <div class="scanning-text">Escaneando...</div>
+    <!-- Formulario de búsqueda -->
+    <div class="search-section">
+      <div class="section-title">
+        <ion-icon name="search-outline"></ion-icon>
+        <h3>Buscar Producto</h3>
       </div>
-    </div>
-    
-    <div class="scanner-instructions">
-      <div class="instruction-item">
-        <ion-icon name="camera"></ion-icon>
-        <span>Enfoca el código de barras del producto</span>
-      </div>
-      <div class="instruction-item">
-        <ion-icon name="scan"></ion-icon>
-        <span>La cámara detectará automáticamente</span>
-      </div>
-    </div>
+      
+      <ion-item>
+        <ion-input 
+          [(ngModel)]="searchQuery"
+          placeholder="Escribe el nombre del producto..."
+          (keyup.enter)="searchProducts()"
+          clearInput>
+        </ion-input>
+      </ion-item>
+      
+      <ion-button 
+        expand="block" 
+        class="search-button"
+        (click)="searchProducts()"
+        [disabled]="!searchQuery.trim()">
+        <ion-icon name="search-outline" slot="start"></ion-icon>
+        Buscar Producto
+      </ion-button>
 
-    <div class="scanner-controls">
-      <ion-button expand="block" color="danger" (click)="stopScanner()">
-        <ion-icon slot="start" name="close"></ion-icon>
-        Cancelar Escaneo
+      <ion-button 
+        expand="block" 
+        fill="outline"
+        (click)="clearSearch()"
+        *ngIf="searchQuery || hasSearched">
+        <ion-icon name="close-outline" slot="start"></ion-icon>
+        Limpiar Búsqueda
       </ion-button>
     </div>
-  </div>
 
-  <!-- MODO BÚSQUEDA NORMAL -->
-  <div class="search-mode" *ngIf="!isScanning">
-    <div class="container">
-      <h2>Consultar Precio de Productos</h2>
-      
-      <!-- Mensaje de error -->
-      <div class="error-message" *ngIf="scanError">
-        <ion-icon name="warning"></ion-icon>
-        <div class="error-content">
-          <strong>Error:</strong>
-          <span>{{ scanError }}</span>
-        </div>
+    <!-- Separador -->
+    <div class="separator">
+      <span>O</span>
+    </div>
+
+    <!-- Sección de escaneo -->
+    <div class="scan-section">
+      <div class="section-title">
+        <ion-icon name="camera-outline"></ion-icon>
+        <h3>Escanear Código de Barras</h3>
       </div>
       
-      <!-- OPCIÓN 1: Buscar por texto -->
-      <div class="search-section">
-        <div class="section-title">
-          <ion-icon name="search"></ion-icon>
-          <h3>Buscar por Nombre</h3>
-        </div>
-        
-        <ion-item>
-          <ion-input 
-            placeholder="Ej: Leche, Arroz, Aceite, Té..."
-            [(ngModel)]="productName"
-            (keyup.enter)="searchProduct()"
-          ></ion-input>
-        </ion-item>
-        
-        <ion-button expand="block" (click)="searchProduct()" [disabled]="!productName.trim()">
-          <ion-icon slot="start" name="search"></ion-icon>
-          Buscar Producto
-        </ion-button>
-      </div>
+      <ion-button 
+        expand="block" 
+        class="scan-button"
+        (click)="startBarcodeScan()"
+        [disabled]="isScanning">
+        <ion-icon name="camera-outline" slot="start"></ion-icon>
+        {{ isScanning ? 'Escaneando...' : 'Iniciar Escáner' }}
+      </ion-button>
 
-      <div class="separator">
-        <span>O</span>
+      <!-- Ayuda para escaneo -->
+      <div class="scan-help">
+        <p>Coloca el código de barras dentro del marco de la cámara</p>
+        <p>Asegúrate de tener buena iluminación</p>
+        <p>Mantén el dispositivo estable</p>
       </div>
+    </div>
 
-      <!-- OPCIÓN 2: Escanear código de barras -->
-      <div class="scan-section">
-        <div class="section-title">
-          <ion-icon name="camera"></ion-icon>
-          <h3>Escanear Código de Barras</h3>
-        </div>
-        
-        <ion-button expand="block" color="secondary" (click)="startBarcodeScan()">
-          <ion-icon slot="start" name="barcode"></ion-icon>
-          Activar Cámara para Escanear
-        </ion-button>
-        
-        <div class="scan-help">
-          <p>📱 Usa la cámara de tu dispositivo para escanear el código de barras</p>
-          <p>🔍 El sistema buscará automáticamente en la base de datos</p>
-        </div>
+    <!-- Estado de carga -->
+    <div class="loading-section" *ngIf="isLoading">
+      <div class="loading-content">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Buscando productos...</p>
       </div>
+    </div>
 
-      <!-- Loading durante escaneo -->
-      <div class="loading-section" *ngIf="isLoading && !isScanning">
-        <div class="loading-content">
-          <ion-spinner name="crescent"></ion-spinner>
-          <p>Buscando productos en la base de datos...</p>
-        </div>
-      </div>
-
-      <!-- Resultados de búsqueda -->
-      <div class="results-section" *ngIf="showResults && !isLoading">
-        <div class="results-header">
-          <div class="results-info">
-            <ion-icon name="cart"></ion-icon>
-            <div>
-              <h3>{{ searchResults.length }} producto(s) encontrado(s)</h3>
-              <span *ngIf="scannedBarcode" class="scan-info">Código escaneado: {{ scannedBarcode }}</span>
+    <!-- Resultados de búsqueda -->
+    <div class="results-section" *ngIf="!isLoading && searchResults.length > 0">
+      <div class="results-header">
+        <div class="results-info">
+          <ion-icon name="search-outline"></ion-icon>
+          <div class="results-text">
+            <h3>Productos Encontrados</h3>
+            <div class="scan-info">
+              <ion-icon name="barcode-outline"></ion-icon>
+              <span>{{ searchResults.length }} producto(s) encontrado(s)</span>
             </div>
           </div>
-          <ion-button fill="clear" size="small" (click)="clearSearch()">
-            <ion-icon slot="start" name="close"></ion-icon>
-            Limpiar
-          </ion-button>
         </div>
+      </div>
 
-        <!-- Sin resultados -->
-        <div class="no-results" *ngIf="searchResults.length === 0">
-          <div class="no-results-content">
-            <ion-icon name="search-circle"></ion-icon>
-            <h4>No se encontraron productos</h4>
-            <p *ngIf="scannedBarcode">
-              El código <strong>"{{ scannedBarcode }}"</strong> no está registrado en la base de datos.
-            </p>
-            <p *ngIf="!scannedBarcode">
-              Intenta con otros términos de búsqueda o escanea un código de barras.
-            </p>
-          </div>
-        </div>
-
-        <!-- Con resultados -->
-        <div class="products-grid" *ngIf="searchResults.length > 0">
-          <ion-card *ngFor="let product of searchResults" class="product-card">
-            <div class="card-header">
-              <div class="product-badge" *ngIf="product.inOffer">
-                <span>🔥 OFERTA</span>
-              </div>
-              <ion-card-title>{{ product.name }}</ion-card-title>
-              <ion-card-subtitle>{{ product.brand }}</ion-card-subtitle> <!-- ✅ Corregido -->
+      <div class="products-grid">
+        <ion-card class="product-card" *ngFor="let product of searchResults">
+          
+          <!-- Imagen del producto con manejo de errores -->
+          <div class="product-image">
+            <img 
+              [src]="product.image" 
+              [alt]="product.name" 
+              (error)="handleImageError($event)" />
+            <div class="product-badge" *ngIf="product.inOffer">
+              <span>Oferta</span>
             </div>
-            
-            <ion-card-content>
-              <div class="product-details">
-                <div class="detail-item">
-                  <ion-icon name="pricetag"></ion-icon>
+          </div>
+
+          <div class="card-header">
+            <ion-card-title>{{ product.name }}</ion-card-title>
+            <ion-card-subtitle>{{ product.brand }}</ion-card-subtitle>
+          </div>
+
+          <ion-card-content>
+            <div class="product-details">
+              
+              <!-- Precio -->
+              <div class="detail-item">
+                <ion-icon name="pricetag-outline"></ion-icon>
+                <div class="detail-content">
                   <div class="price-section">
                     <span class="price" [class.on-offer]="product.inOffer">
-                      $ {{ product.price.toLocaleString('es-CL') }}
+                      ${{ product.price | number }}
                     </span>
                     <span class="offer-price" *ngIf="product.inOffer">
-                      $ {{ product.offerPrice?.toLocaleString('es-CL') }}
+                      ${{ product.offerPrice | number }}
                     </span>
                   </div>
                 </div>
-                
-                <div class="detail-item">
-                  <ion-icon name="apps"></ion-icon>
-                  <span>{{ product.category }}</span>
-                </div>
-
               </div>
-            </ion-card-content>
-          </ion-card>
-        </div>
 
-        <!-- Botón para nueva búsqueda -->
-        <div class="new-search" *ngIf="searchResults.length > 0">
-          <ion-button expand="block" fill="outline" (click)="clearSearch()">
-            <ion-icon slot="start" name="refresh"></ion-icon>
-            Realizar Nueva Búsqueda
-          </ion-button>
-        </div>
+              <!-- Código de barras -->
+              <div class="detail-item">
+                <ion-icon name="barcode-outline"></ion-icon>
+                <div class="detail-content">
+                  <span class="barcode">{{ product.barcode }}</span>
+                </div>
+              </div>
+
+              <!-- Categoría -->
+              <div class="detail-item">
+                <ion-icon name="pricetags-outline"></ion-icon>
+                <div class="detail-content">
+                  <span class="category">{{ product.category }}</span>
+                </div>
+              </div>
+
+              <!-- Ubicación -->
+              <div class="detail-item" *ngIf="product.supermarketLocation">
+                <ion-icon name="location-outline"></ion-icon>
+                <div class="detail-content">
+                  <div class="location-info">
+                    <strong>Ubicación:</strong><br>
+                    {{ product.supermarketLocation.aisle }}, 
+                    {{ product.supermarketLocation.section }}, 
+                    {{ product.supermarketLocation.shelf }}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+      <!-- Botón para nueva búsqueda -->
+      <div class="new-search">
+        <ion-button 
+          expand="block" 
+          fill="outline"
+          (click)="clearSearch()">
+          <ion-icon name="search-outline" slot="start"></ion-icon>
+          Nueva Búsqueda
+        </ion-button>
       </div>
     </div>
+
+    <!-- Sin resultados -->
+    <div class="no-results" *ngIf="!isLoading && hasSearched && searchResults.length === 0">
+      <div class="no-results-content">
+        <ion-icon name="search-outline"></ion-icon>
+        <h4>No se encontraron productos</h4>
+        <p>No encontramos productos que coincidan con "<strong>{{ searchQuery }}</strong>"</p>
+        <p>Intenta con otros términos de búsqueda o escanea el código de barras.</p>
+      </div>
+    </div>
+
+    <!-- Mensaje de error -->
+    <div class="error-message" *ngIf="scanError && !isLoading">
+      <ion-icon name="warning-outline"></ion-icon>
+      <div class="error-content">
+        <strong>Error</strong>
+        <span>{{ scanError }}</span>
+      </div>
+    </div>
+
   </div>
 </ion-content>
+
+<!-- Modo cámara (oculto por defecto) -->
+<div class="camera-mode" *ngIf="isScanning">
+  
+  <!-- Vista de la cámara -->
+  <video #videoElement class="camera-view" autoplay playsinline></video>
+  <canvas #canvasElement class="hidden-canvas"></canvas>
+  
+  <!-- Overlay del escáner -->
+  <div class="scanner-overlay">
+    <div class="scanner-frame">
+      <div class="scanning-laser"></div>
+      <!-- Esquinas del frame -->
+      <div class="corner top-left"></div>
+      <div class="corner top-right"></div>
+      <div class="corner bottom-left"></div>
+      <div class="corner bottom-right"></div>
+      <div class="scanning-text">Escaneando código de barras...</div>
+    </div>
+  </div>
+
+  <!-- Instrucciones -->
+  <div class="scanner-instructions">
+    <div class="instruction-item">
+      <ion-icon name="videocam-outline"></ion-icon>
+      <span>Enfoca el código de barras dentro del marco</span>
+    </div>
+    <div class="instruction-item">
+      <ion-icon name="sunny-outline"></ion-icon>
+      <span>Asegúrate de tener buena iluminación</span>
+    </div>
+    <div class="instruction-item">
+      <ion-icon name="hand-left-outline"></ion-icon>
+      <span>Mantén el dispositivo estable</span>
+    </div>
+  </div>
+
+  <!-- Controles de la cámara -->
+  <div class="scanner-controls">
+    <ion-button 
+      expand="block" 
+      class="cancel-button"
+      (click)="stopScanner(false)">
+      <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+      Cancelar Escaneo
+    </ion-button>
+  </div>
+</div>

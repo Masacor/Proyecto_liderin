@@ -49,18 +49,44 @@
         <div class="integrated-chat-input" *ngIf="showChatInput">
           <ion-textarea
             [(ngModel)]="userMessage"
-            placeholder="Escribe tu mensaje a Liderín..."
+            [placeholder]="speechSupported ? 'Escribe o usa el micrófono...' : 'Escribe tu mensaje...'"
             rows="1"
             autoGrow="true"
             (keyup.enter)="sendMessage()"
+            class="chat-textarea"
           ></ion-textarea>
-          <ion-button (click)="sendMessage()" [disabled]="!userMessage.trim() || isLoading">
+          
+          <!-- Botón de micrófono con tooltip -->
+          <ion-button (click)="toggleListening()" 
+                      [color]="isListening ? 'danger' : 'primary'"
+                      [disabled]="!speechSupported"
+                      title="{{ !speechSupported ? 'Reconocimiento de voz no soportado en este navegador' : 'Usar micrófono' }}"
+                      class="voice-btn">
+            <ion-icon [name]="isListening ? 'mic-off' : 'mic'"></ion-icon>
+          </ion-button>
+          
+          <!-- Botón de enviar -->
+          <ion-button (click)="sendMessage()" 
+                      [disabled]="!userMessage.trim() || isLoading"
+                      class="send-btn">
             <ion-icon name="send"></ion-icon>
           </ion-button>
         </div>
+
+        <!-- Indicador de escucha -->
+        <div class="voice-status" *ngIf="isListening">
+          <ion-spinner name="crescent"></ion-spinner>
+          <span>Escuchando... Habla ahora</span>
+        </div>
+
+        <!-- Mensaje de ayuda para compatibilidad -->
+        <div class="browser-support-message" *ngIf="!speechSupported && showChatInput">
+          <ion-icon name="information-circle"></ion-icon>
+          <span>El reconocimiento de voz funciona mejor en Chrome/Edge. Asegúrate de usar HTTPS.</span>
+        </div>
       </div>
 
-      <!-- 🆕 CONTENIDO DINÁMICO: OPCIONES O RESPUESTA DEL CHAT -->
+      <!-- CONTENIDO DINÁMICO: OPCIONES O RESPUESTA DEL CHAT -->
       <div class="content-section">
         
         <!-- OPCIONES DE CONVERSACIÓN - SE OCULTAN CUANDO SE CONVERSA -->
@@ -102,23 +128,41 @@
           </ion-list>
         </div>
 
-        <!-- 🆕 RESPUESTA DEL CHAT - APARECE CUANDO SE CONVERSA -->
+        <!-- RESPUESTA DEL CHAT - APARECE CUANDO SE CONVERSA -->
         <div class="chat-response-section" *ngIf="isInConversation">
           
-          <!-- Cabecera con botón para volver -->
+          <!-- Cabecera con botones de control -->
           <div class="chat-header">
-            <ion-button fill="clear" size="small" (click)="endConversation()">
-              <ion-icon name="arrow-back" slot="start"></ion-icon>
-              Volver a opciones
-            </ion-button>
+            <div class="chat-controls-left">
+              <ion-button fill="clear" size="small" (click)="endConversation()" class="back-btn">
+                <ion-icon name="arrow-back" slot="start"></ion-icon>
+                Volver a opciones
+              </ion-button>
+            </div>
+            
+            <div class="chat-controls-right">
+              <!-- Botón para silenciar voz -->
+              <ion-button fill="clear" size="small" (click)="toggleMute()" [color]="isMuted ? 'medium' : 'primary'" class="mute-btn">
+                <ion-icon [name]="isMuted ? 'volume-mute' : 'volume-high'" slot="start"></ion-icon>
+                {{ isMuted ? 'Silenciado' : 'Silenciar' }}
+              </ion-button>
+              
+              <!-- Botón para repetir voz -->
+              <ion-button fill="clear" size="small" (click)="repeatVoice()" [disabled]="isSpeaking || isMuted" class="repeat-btn">
+                <ion-icon [name]="isSpeaking ? 'play' : 'reload'" slot="start"></ion-icon>
+                {{ isSpeaking ? 'Reproduciendo...' : 'Repetir' }}
+              </ion-button>
+            </div>
           </div>
 
-          <!-- Cuadro de texto del avatar -->
+          <!-- Cuadro de texto del avatar - MÁS GRANDE -->
           <div class="avatar-bubble-response">
-            <p>{{ chatMessage }}</p>
-            <div class="typing-indicator" *ngIf="isLoading">
-              <ion-spinner name="crescent"></ion-spinner>
-              <span>Liderín está escribiendo...</span>
+            <div class="message-content">
+              <p class="chat-text">{{ chatMessage }}</p>
+              <div class="typing-indicator" *ngIf="isLoading">
+                <ion-spinner name="crescent"></ion-spinner>
+                <span>Liderín está escribiendo...</span>
+              </div>
             </div>
           </div>
 

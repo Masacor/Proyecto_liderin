@@ -7,7 +7,7 @@ export const routes: Routes = [
   },
   {
     path: 'price-check',
-    loadComponent: () => import('./price-check/price-check.page').then((m) => m.PriceCheckPage),
+    loadComponent: () => import('./price-check/price-check.page').then((m) => m.PriceCheckerPage),
   },
   {
     path: 'recipes',
@@ -15,7 +15,7 @@ export const routes: Routes = [
   },
   {
     path: 'offers',
-    loadComponent: () => import('./offers/offers.page').then( m => m.OffersPage)
+    loadComponent: () => import('./offers/offers.page').then(m => m.OffersPage)
   },
   {
     path: '',
@@ -24,10 +24,10 @@ export const routes: Routes = [
   },
   {
     path: 'store-locator',
-    loadComponent: () => import('./store-locator/store-locator.page').then( m => m.StoreLocatorPage)
-  },  {
-    path: 'app-download',
-    loadComponent: () => import('./app-download/app-download.page').then( m => m.AppDownloadPage)
+    loadComponent: () => import('./store-locator/store-locator.page').then(m => m.StoreLocatorPage)
   },
-
+  {
+    path: 'app-download',
+    loadComponent: () => import('./app-download/app-download.page').then(m => m.AppDownloadPage)
+  },
 ];
